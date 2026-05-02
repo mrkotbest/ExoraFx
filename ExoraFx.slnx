@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ExoraFx.Api.Tests/ExoraFx.Api.Tests.csproj" />
+  <Project Path="ExoraFx.Api/ExoraFx.Api.csproj" />
+</Solution>
