@@ -2,6 +2,7 @@
 
 > A lightweight currency-exchange service for Ukraine — REST API and a Telegram bot in a single ASP.NET Core process. Live rates from **Monobank**, **PrivatBank**, and the **National Bank of Ukraine**, with configurable margin and per-user preferences.
 
+[![CI](https://github.com/mrkotbest/ExoraFx/actions/workflows/ci.yml/badge.svg)](https://github.com/mrkotbest/ExoraFx/actions/workflows/ci.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
 [![Telegram Bot API](https://img.shields.io/badge/Telegram%20Bot-22.x-26A5E4)](https://core.telegram.org/bots/api)
