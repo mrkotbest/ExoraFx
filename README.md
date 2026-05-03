@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.txt)
 [![Telegram Bot API](https://img.shields.io/badge/Telegram%20Bot-22.x-26A5E4)](https://core.telegram.org/bots/api)
 
-**Live bot:** [@exora_fx_bot](https://t.me/exora_fx_bot)
+**Live Telegram Bot:** [@exora_fx_bot](https://t.me/exora_fx_bot)
 
 ---
 
@@ -44,48 +44,6 @@ dotnet run --project ExoraFx.Api
 
 Open **http://localhost:5120/scalar/v1** for the interactive API reference. The Telegram bot starts long-polling automatically once a token is provided.
 
-## Telegram bot
-
-Try it: **[@exora_fx_bot](https://t.me/exora_fx_bot)**
-
-### Calculation syntax
-
-The bot reads short messages, no fixed grammar. The first token is the amount, the rest can come in any order — currency, bank, margin override.
-
-| You type | Result |
-| -------- | ------ |
-| `100 eur` | 100 EUR → UAH with your default bank and margin |
-| `100 eur mono` | …pinned to Monobank (`mono` / `privat` / `nbu`) |
-| `100 eur 8%` | …with margin override on this calculation only |
-| `100 eur mono 8%` | bank + margin in one go |
-| `100 eur usd` | cross-currency: EUR → USD via UAH |
-| `eur` | calculation on your default amount from `/settings` |
-| `5000 uah` | reverse: how much foreign you'd give for 5000 ₴ |
-| `5к eur` / `1.5K usd` | `к` and `K` mean thousands |
-
-The amount also accepts plain words: `100 евро`, `200 долларов`, `5000 грн`, `300 злотых` (and Ukrainian / English variants).
-
-### Commands
-
-| Command | What it does |
-| ------- | ------------ |
-| `/help` | Cheat sheet of inputs and commands |
-| `/rates` | Live rate table for every supported currency, with the best bank highlighted (🏆) |
-| `/table` | Pre-built grid of common amounts (5, 10, 20, 50, …, 5000) for one currency and bank |
-| `/scenario` | Margin grid (1% — 15%) for your default amount and currency — handy when planning a trade |
-| `/history` | Recent conversions, paginated. Each entry can be marked ⏳ draft → 🟢 done. |
-| `/stats` | Volume, profit, top bank, top currency, biggest trade — over today / 7 days / 30 days / all time |
-| `/settings` | Inline menu to change language, default bank/currency/amount, personal margin, history toggle, and the «🏆 best bank» hint |
-| `/whoami` | Your Telegram id and role |
-
-### Inline mode
-
-Type `@exora_fx_bot 100 eur` in any chat (group, DM with a friend) — the bot suggests the calculation as an inline result, ready to send. Useful for sharing a rate without forwarding a screenshot.
-
-### Per-user state
-
-Language, default bank, default currency, default amount, personal margin, history-recording toggle, and the «better bank» hint all live in SQLite per Telegram user id. Set them once in `/settings`, they survive restarts.
-
 ## REST API
 
 | Method | Path | Description |
@@ -106,36 +64,50 @@ curl 'http://localhost:5120/convert?from=EUR&to=UAH&amount=100&bank=monobank&mar
 
 ```json
 {
-  "from": "EUR", "fromAmount": 100,
-  "to": "UAH",  "toAmount": 4912.45,
-  "officialRate": 51.71, "effectiveRate": 49.1245,
-  "marginPercent": 5, "profitUah": 258.55,
-  "bank": "monobank", "isStale": false
+  "from": "EUR",
+  "fromAmount": 100,
+  "to": "UAH",
+  "toAmount": 4912.45,
+  "officialRate": 51.71,
+  "effectiveRate": 49.1245,
+  "marginPercent": 5,
+  "profitUah": 258.55,
+  "bank": "monobank",
+  "isStale": false
 }
 ```
 
 Full schema and try-it-out UI — at `/scalar/v1`.
 
+## Telegram bot
+
+Try it: **[@exora_fx_bot](https://t.me/exora_fx_bot)**
+
+The bot reads short messages — first token is the amount, the rest can come in any order:
+
+| You type | Result |
+| -------- | ------ |
+| `100 eur` | 100 EUR → UAH with your default bank and margin |
+| `100 eur mono 8%` | pin Monobank, override margin to 8% |
+| `5000 uah` | reverse: how much foreign you'd give for 5000 ₴ |
+| `5к eur` | `к` and `K` mean thousands |
+
+Words like `евро`, `грн`, `злотый` work too (with Ukrainian and English variants).
+
+Main commands: `/help`, `/rates`, `/settings`, `/history`, `/stats`. The `/settings` menu changes language, default bank/currency/amount, personal margin, and toggles. Inline mode also works — type `@exora_fx_bot 100 eur` in any chat.
+
 ## Architecture
 
 ```
-   Telegram  ─▶  TelegramBotService              HTTP  ─▶  ExchangeController
-                 (long-polling, parser)                    (REST + Scalar UI)
-                         │                                          │
-                         └──────────────────┬───────────────────────┘
-                                            ▼
-                                   ConversionService
-                                            │
-                                            ▼
-                                  ExchangeRateService   ◀──  RateRefreshBackground
-                                  (IMemoryCache)             (every 240s, parallel)
-                                            │
-                            ┌───────────────┼───────────────┐
-                            ▼               ▼               ▼
-                         Monobank        PrivatBank        NBU
-                       api.monobank.ua  api.privatbank.ua  bank.gov.ua
-
-           SQLite  ─  user settings · conversion history · bot logs
+┌──────────────┐    ┌─────────────────────┐
+│  Telegram    │───▶│  TelegramBotService │──┐
+└──────────────┘    └─────────────────────┘  │
+                                             │
+                                             ├──▶ ConversionService ──▶ ExchangeRateService ──▶ Monobank
+┌──────────────┐    ┌─────────────────────┐  │            │                       ▲              PrivatBank
+│  HTTP client │───▶│  ExchangeController │──┘            ▼                       │                 NBU
+└──────────────┘    └─────────────────────┘         SQLite (settings,    RateRefreshBackground
+                                                     history, logs)        (every 240 s)
 ```
 
 `RateRefreshBackgroundService` polls every provider in parallel every 240 seconds and stores the snapshot in `IMemoryCache`. Providers are stateless — adding a new bank means implementing `IRateProvider` and registering one line in `Program.cs`.
@@ -176,4 +148,4 @@ Provider tests use a stubbed `HttpMessageHandler` — no live network calls. SQL
 
 MIT — see [LICENSE.txt](LICENSE.txt).
 
-Author: [@mrkotbest](https://github.com/mrkotbest) · Live bot: [@exora_fx_bot](https://t.me/exora_fx_bot)
+Author: [@mrkotbest](https://github.com/mrkotbest) · Live Telegram Bot: [@exora_fx_bot](https://t.me/exora_fx_bot)
