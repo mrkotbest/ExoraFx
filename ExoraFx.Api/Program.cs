@@ -80,6 +80,7 @@ builder.Services.AddSingleton<IExchangeRateService, ExchangeRateService>();
 builder.Services.AddSingleton<IConversionService, ConversionService>();
 builder.Services.AddSingleton<ITelegramBotClientProvider, TelegramBotClientProvider>();
 builder.Services.AddSingleton<IBotLogService, BotLogService>();
+builder.Services.AddSingleton<ILanguageValidator, LanguageResolver>();
 builder.Services.AddSingleton<IBotLocalizer, BotLocalizer>();
 builder.Services.AddSingleton<IUserSettingsStore, SqliteUserSettingsStore>();
 builder.Services.AddSingleton<IUserDefaultsResolver, UserDefaultsResolver>();

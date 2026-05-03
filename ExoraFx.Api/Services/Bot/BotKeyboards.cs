@@ -6,7 +6,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace ExoraFx.Api.Services.Bot;
 
-public sealed class BotKeyboards(IBotLocalizer localizer, IExchangeRateService rateService)
+public sealed class BotKeyboards(IBotLocalizer localizer, ILanguageValidator languageValidator, IExchangeRateService rateService)
 {
     public static readonly string[] Banks = ["monobank", "privatbank", "nbu"];
     public static readonly string[] Currencies = ["eur", "usd", "pln"];
@@ -267,7 +267,7 @@ public sealed class BotKeyboards(IBotLocalizer localizer, IExchangeRateService r
     {
         "monobank" => "Monobank",
         "privatbank" => "PrivatBank",
-        "nbu" => string.Equals(localizer.ResolveLanguage(lang), "en", StringComparison.OrdinalIgnoreCase) ? "NBU" : "НБУ",
+        "nbu" => string.Equals(languageValidator.ResolveLanguage(lang), "en", StringComparison.OrdinalIgnoreCase) ? "NBU" : "НБУ",
         _ => bank,
     };
 

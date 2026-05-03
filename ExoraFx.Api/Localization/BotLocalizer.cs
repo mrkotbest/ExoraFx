@@ -2,52 +2,20 @@ using System.Globalization;
 
 namespace ExoraFx.Api.Localization;
 
-public sealed class BotLocalizer : IBotLocalizer
+public sealed class BotLocalizer(ILanguageValidator languageValidator) : IBotLocalizer
 {
-    public const string DefaultLanguage = "ru";
-
-    private static readonly string[] Supported = ["ru", "uk", "en"];
-
-    private static readonly Dictionary<string, string> InputAliases = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["ua"] = "uk",
-    };
-
     private static readonly Dictionary<string, Dictionary<string, string>> Strings = Build();
 
     public string Get(string key, string? languageCode, params object[] args)
     {
-        var lang = ResolveLanguage(languageCode);
+        var lang = languageValidator.ResolveLanguage(languageCode);
         var template = Strings.TryGetValue(key, out var byLang)
-            ? byLang.GetValueOrDefault(lang) ?? byLang.GetValueOrDefault(DefaultLanguage) ?? key
+            ? byLang.GetValueOrDefault(lang) ?? byLang.GetValueOrDefault(LanguageResolver.DefaultLanguage) ?? key
             : key;
 
         return args.Length == 0
             ? template
             : string.Format(CultureInfo.InvariantCulture, template, args);
-    }
-
-    public string ResolveLanguage(string? languageCode)
-    {
-        if (languageCode is null)
-            return DefaultLanguage;
-
-        var dash = languageCode.IndexOf('-');
-        var prefix = (dash < 0 ? languageCode : languageCode[..dash]).ToLowerInvariant();
-
-        if (InputAliases.TryGetValue(prefix, out var alias))
-            return alias;
-
-        return Array.IndexOf(Supported, prefix) >= 0 ? prefix : DefaultLanguage;
-    }
-
-    public bool IsSupportedInput(string? languageCode)
-    {
-        if (string.IsNullOrWhiteSpace(languageCode))
-            return false;
-
-        var prefix = languageCode.Trim().ToLowerInvariant();
-        return InputAliases.ContainsKey(prefix) || Array.IndexOf(Supported, prefix) >= 0;
     }
 
     private static Dictionary<string, Dictionary<string, string>> Build() => new()

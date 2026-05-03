@@ -37,7 +37,7 @@ public class UserSettingsStoreTests : IDisposable
     }
 
     private SqliteUserSettingsStore CreateStore() =>
-        new(_factory, new BotLocalizer(), Options.Create(_exchange));
+        new(_factory, new LanguageResolver(), Options.Create(_exchange));
 
     [Fact]
     public void Get_UnknownUser_ReturnsAllNullFields()

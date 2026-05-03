@@ -10,7 +10,7 @@ namespace ExoraFx.Api.Services.Storage;
 
 public sealed class SqliteUserSettingsStore(
     IDbConnectionFactory factory,
-    IBotLocalizer localizer,
+    ILanguageValidator languageValidator,
     IOptions<ExchangeSettings> exchangeSettings) : IUserSettingsStore
 {
     private readonly ExchangeSettings _exchange = exchangeSettings.Value;
@@ -49,10 +49,10 @@ public sealed class SqliteUserSettingsStore(
 
     public bool TrySetLanguage(long userId, string language)
     {
-        if (!localizer.IsSupportedInput(language))
+        if (!languageValidator.IsSupportedInput(language))
             return false;
 
-        var normalized = localizer.ResolveLanguage(language);
+        var normalized = languageValidator.ResolveLanguage(language);
         Update(userId, current => current with { Language = normalized });
         return true;
     }
