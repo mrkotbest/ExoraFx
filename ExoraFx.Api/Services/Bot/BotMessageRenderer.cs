@@ -30,7 +30,7 @@ public sealed class BotMessageRenderer(
         if (r.ProfitEur is { } eur)
             profitLine += $" · *{CurrencyHelper.FormatAmount(eur, 2)} €*";
 
-        var bestBank = ResolveBestBank(r);
+        var bestBank = rateService.FindBestBank(r.From, r.To);
         var bankCup = bestBank is not null && bestBank == r.Bank ? " 🏆" : "";
 
         var body =
@@ -44,17 +44,6 @@ public sealed class BotMessageRenderer(
 
         var hint = BuildBetterBankHint(r, bestBank, showBestHint, lang);
         return hint is null ? body : body + "\n\n" + hint;
-    }
-
-    private string? ResolveBestBank(ConvertResult r)
-    {
-        var fromL = r.From.ToLowerInvariant();
-        var toL = r.To.ToLowerInvariant();
-        if (fromL == toL || (fromL != CurrencyHelper.Uah && toL != CurrencyHelper.Uah))
-            return null;
-        var foreign = fromL == CurrencyHelper.Uah ? toL : fromL;
-        var allRates = rateService.GetAllRates(foreign);
-        return allRates.Count == 0 ? null : allRates.MinBy(kv => kv.Value.Rate).Key;
     }
 
     private string? BuildBetterBankHint(ConvertResult r, string? bestBank, bool showBestHint, string? lang)

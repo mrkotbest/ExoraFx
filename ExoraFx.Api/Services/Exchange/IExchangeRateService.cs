@@ -8,6 +8,8 @@ public interface IExchangeRateService
 
     Dictionary<string, CachedBankRate> GetAllRates(string currency);
 
+    string? FindBestBank(string fromCurrency, string toCurrency);
+
     HealthResponse GetHealth();
 
     Task RefreshAllAsync(CancellationToken cancellationToken = default);

@@ -41,8 +41,7 @@ public sealed class BotKeyboards(IBotLocalizer localizer, ILanguageValidator lan
             return new InlineKeyboardMarkup([actionRow.ToArray()]);
         }
 
-        var allRates = rateService.GetAllRates(foreign);
-        var bestBank = allRates.Count == 0 ? null : allRates.MinBy(kv => kv.Value.Rate).Key;
+        var bestBank = rateService.FindBestBank(result.From, result.To);
 
         var bankRow = Banks
             .Select(b => InlineKeyboardButton.WithCallbackData(

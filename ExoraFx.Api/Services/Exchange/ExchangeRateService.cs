@@ -36,6 +36,18 @@ public sealed class ExchangeRateService(IEnumerable<IRateProvider> providers, IM
         return result;
     }
 
+    public string? FindBestBank(string fromCurrency, string toCurrency)
+    {
+        var fromL = fromCurrency.ToLowerInvariant();
+        var toL = toCurrency.ToLowerInvariant();
+        if (fromL == toL || (fromL != CurrencyHelper.Uah && toL != CurrencyHelper.Uah))
+            return null;
+
+        var foreign = fromL == CurrencyHelper.Uah ? toL : fromL;
+        var allRates = GetAllRates(foreign);
+        return allRates.Count == 0 ? null : allRates.MinBy(kv => kv.Value.Rate).Key;
+    }
+
     public HealthResponse GetHealth()
     {
         var raw = RawCache();

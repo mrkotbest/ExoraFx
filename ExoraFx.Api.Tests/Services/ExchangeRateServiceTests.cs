@@ -125,6 +125,54 @@ public class ExchangeRateServiceTests
     }
 
     [Fact]
+    public async Task FindBestBank_ReturnsLowestRateBank_ForUahPair()
+    {
+        var service = CreateService(
+            MockProvider("monobank", 51.71m).Object,
+            MockProvider("privatbank", 51.50m).Object,
+            MockProvider("nbu", 51.35m).Object);
+        await service.RefreshAllAsync();
+
+        Assert.Equal("nbu", service.FindBestBank("eur", "uah"));
+        Assert.Equal("nbu", service.FindBestBank("uah", "eur"));
+    }
+
+    [Fact]
+    public async Task FindBestBank_NonUahPair_ReturnsNull()
+    {
+        var service = CreateService(MockProvider("monobank", 51.71m, 41.50m).Object);
+        await service.RefreshAllAsync();
+
+        Assert.Null(service.FindBestBank("eur", "usd"));
+    }
+
+    [Fact]
+    public async Task FindBestBank_SameCurrency_ReturnsNull()
+    {
+        var service = CreateService(MockProvider("monobank", 51.71m).Object);
+        await service.RefreshAllAsync();
+
+        Assert.Null(service.FindBestBank("uah", "uah"));
+        Assert.Null(service.FindBestBank("eur", "eur"));
+    }
+
+    [Fact]
+    public void FindBestBank_NoRates_ReturnsNull()
+    {
+        var service = CreateService();
+        Assert.Null(service.FindBestBank("eur", "uah"));
+    }
+
+    [Fact]
+    public async Task FindBestBank_IsCaseInsensitive()
+    {
+        var service = CreateService(MockProvider("monobank", 51.71m).Object);
+        await service.RefreshAllAsync();
+
+        Assert.Equal("monobank", service.FindBestBank("EUR", "UAH"));
+    }
+
+    [Fact]
     public async Task GetHealth_ReportsProviderStatus()
     {
         var service = CreateService(

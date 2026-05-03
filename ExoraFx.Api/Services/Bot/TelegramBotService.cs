@@ -240,15 +240,11 @@ public sealed class TelegramBotService(
         if (bankExplicit || !showHint || direction == ConversionDirection.Cross)
             return original;
 
+        var bestBank = rateService.FindBestBank(original.From, original.To);
+        if (bestBank is null || bestBank == original.Bank)
+            return original;
+
         var foreign = (direction == ConversionDirection.Reverse ? original.To : original.From).ToLowerInvariant();
-        var allRates = rateService.GetAllRates(foreign);
-        if (allRates.Count == 0)
-            return original;
-
-        var bestBank = allRates.MinBy(kv => kv.Value.Rate).Key;
-        if (bestBank == original.Bank)
-            return original;
-
         var recalc = direction == ConversionDirection.Reverse
             ? conversion.ConvertReverse(foreign, original.ToAmount, bestBank, original.MarginPercent)
             : conversion.Convert(foreign, CurrencyHelper.Uah, original.FromAmount, bestBank, original.MarginPercent);
