@@ -98,16 +98,18 @@ Main commands: `/help`, `/rates`, `/settings`, `/history`, `/stats`. The `/setti
 
 ## Architecture
 
-```
-┌──────────────┐    ┌─────────────────────┐
-│  Telegram    │───▶│  TelegramBotService │──┐
-└──────────────┘    └─────────────────────┘  │
-                                             │
-                                             ├──▶ ConversionService ──▶ ExchangeRateService ──▶ Monobank
-┌──────────────┐    ┌─────────────────────┐  │            │                       ▲              PrivatBank
-│  HTTP client │───▶│  ExchangeController │──┘            ▼                       │                 NBU
-└──────────────┘    └─────────────────────┘         SQLite (settings,    RateRefreshBackground
-                                                     history, logs)        (every 240 s)
+```mermaid
+flowchart TD
+    TG([Telegram]) --> BOT(TelegramBotService)
+    HTTP([HTTP client]) --> CTRL(ExchangeController)
+    BOT --> DB[("SQLite<br/>settings · history · bot logs")]
+    BOT --> CONV(ConversionService)
+    CTRL --> CONV
+    CONV --> RATE(ExchangeRateService<br/>IMemoryCache)
+    REFRESH([RateRefreshBackground<br/>every 240 s]) --> RATE
+    RATE --> M[Monobank]
+    RATE --> P[PrivatBank]
+    RATE --> N[NBU]
 ```
 
 `RateRefreshBackgroundService` polls every provider in parallel every 240 seconds and stores the snapshot in `IMemoryCache`. Providers are stateless — adding a new bank means implementing `IRateProvider` and registering one line in `Program.cs`.
@@ -148,4 +150,4 @@ Provider tests use a stubbed `HttpMessageHandler` — no live network calls. SQL
 
 MIT — see [LICENSE.txt](LICENSE.txt).
 
-Author: [@mrkotbest](https://github.com/mrkotbest) · Live Telegram Bot: [@exora_fx_bot](https://t.me/exora_fx_bot)
+Author: [@mrkotbest](https://github.com/mrkotbest)
