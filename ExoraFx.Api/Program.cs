@@ -3,6 +3,7 @@ using ExoraFx.Api.Localization;
 using ExoraFx.Api.Middleware;
 using ExoraFx.Api.Persistence;
 using ExoraFx.Api.Providers;
+using ExoraFx.Api.Services.Bot;
 using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 
